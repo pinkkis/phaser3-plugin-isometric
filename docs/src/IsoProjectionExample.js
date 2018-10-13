@@ -1,5 +1,5 @@
 import Phaser, { Scene, Game } from 'phaser';
-import IsoPlugin from 'phaser3-plugin-isometric';
+import IsoPlugin from '../../dist/phaser-plugin-isometric';
 
 class IsoProjectionExample extends Scene {
   constructor() {

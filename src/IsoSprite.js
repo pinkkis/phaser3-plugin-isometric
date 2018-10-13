@@ -28,6 +28,24 @@ export default class IsoSprite extends Sprite {
     super(scene, x, y, texture, frame);
 
     /**
+     * @property {Phaser.GameObjects.Graphics} graphics object to hold the debug
+     * @private
+     */
+    this._debugGraphics = null;
+
+    /**
+     * @property {boolean} whether to render debug
+     * @private
+     */
+    this._renderDebug = false;
+
+    /**
+     * @property {object} x and y offsets in 2d space for debug
+     * @private
+     */
+    this._debugOffset = {x: 0, y: 0};
+
+    /**
      * @property {number} type - The const type of this object.
      * @readonly
      */
@@ -66,6 +84,7 @@ export default class IsoSprite extends Sprite {
      * @private
      */
     this._isoBounds = this.resetIsoBounds();
+
   }
 
   /**
@@ -185,6 +204,7 @@ export default class IsoSprite extends Sprite {
     Sprite.prototype.preUpdate.call(this);
 
     this._project();
+    this._renderDebug && this.drawDebug();
   }
 
   resetIsoBounds() {
@@ -205,82 +225,91 @@ export default class IsoSprite extends Sprite {
 
     return this._isoBounds;
   }
+
+  renderDebug(renderDebug) {
+    this._renderDebug = !!renderDebug;
+
+    if (this._renderDebug) {
+      if (!this._debugGraphics) {
+        this._debugGraphics = this.scene.add.graphics();
+        this._createDebug();
+      }
+    } else {
+      this._renderDebug = false;
+      if (this._debugGraphics) {
+        this._debugGraphics.destroy();
+        this._debugGraphics = null;
+      }
+    }
+  }
+
+  _createDebug(lineColor = 0xFF0000, lineAlpha = 1, lineThickness = 1) {
+    let self = this;
+
+    if (!this._isoBounds ||
+        !this._renderDebug ||
+        !this._isoPositionChanged) {
+      return;
+    }
+
+    this._debugGraphics.clear();
+    this._debugGraphics.depth = this.depth + 1;
+
+    this._debugGraphics.lineStyle(lineThickness, lineColor, lineAlpha);
+
+    let corners = this._isoBounds.getCorners();
+    let points = corners.slice(0, corners.length);
+    let posX = -this.scene.cameras.main.x;
+    let posY = -this.scene.cameras.main.y;
+
+    points = points.map(function (p) {
+      let newPos = self.scene.iso.projector.project(p);
+      newPos.x += posX;
+      newPos.y += posY;
+      return newPos;
+    });
+
+    this._debugOffset.x = points[0].x;
+    this._debugOffset.y = points[0].y;
+
+    this._debugGraphics.beginPath();
+
+    this._debugGraphics.moveTo(points[0].x, points[0].y);
+    this._debugGraphics.lineTo(points[1].x, points[1].y);
+    this._debugGraphics.lineTo(points[3].x, points[3].y);
+    this._debugGraphics.lineTo(points[2].x, points[2].y);
+    this._debugGraphics.lineTo(points[6].x, points[6].y);
+    this._debugGraphics.lineTo(points[4].x, points[4].y);
+    this._debugGraphics.lineTo(points[5].x, points[5].y);
+    this._debugGraphics.lineTo(points[1].x, points[1].y);
+    this._debugGraphics.lineTo(points[0].x, points[0].y);
+    this._debugGraphics.lineTo(points[4].x, points[4].y);
+    this._debugGraphics.moveTo(points[0].x, points[0].y);
+    this._debugGraphics.lineTo(points[2].x, points[2].y);
+    this._debugGraphics.moveTo(points[3].x, points[3].y);
+    this._debugGraphics.lineTo(points[7].x, points[7].y);
+    this._debugGraphics.lineTo(points[6].x, points[6].y);
+    this._debugGraphics.moveTo(points[7].x, points[7].y);
+    this._debugGraphics.lineTo(points[5].x, points[5].y);
+
+    // console.log(points);
+
+    this._debugGraphics.closePath();
+
+    this._debugGraphics.strokePath();
+  }
+
+  drawDebug() {
+    if (!this._renderDebug) {
+      return;
+    }
+
+    // console.log(this._isoBounds.widthX, this._isoBounds.widthY, this._isoBounds.height, this.height);
+
+    this._debugGraphics.x = this.x - this._debugOffset.x ;
+    this._debugGraphics.y = this.y - this._debugOffset.y ;
+
+    this._debugGraphics.depth = this.depth + 1;
+
+  }
 }
-
-
-
-
-// Phaser.Utils.Debug.prototype.isoSprite = function (sprite, color, filled) {
-//
-//   if (!sprite.isoBounds) {
-//     return;
-//   }
-//
-//   if (typeof filled === 'undefined') {
-//     filled = true;
-//   }
-//
-//   color = color || 'rgba(0,255,0,0.4)';
-//
-//
-//   var points = [],
-//     corners = sprite.isoBounds.getCorners();
-//
-//   var posX = -sprite.game.camera.x;
-//   var posY = -sprite.game.camera.y;
-//
-//   this.start();
-//
-//   if (filled) {
-//     points = [corners[1], corners[3], corners[2], corners[6], corners[4], corners[5], corners[1]];
-//
-//     points = points.map(function (p) {
-//       var newPos = sprite.game.iso.project(p);
-//       newPos.x += posX;
-//       newPos.y += posY;
-//       return newPos;
-//     });
-//     this.context.beginPath();
-//     this.context.fillStyle = color;
-//     this.context.moveTo(points[0].x, points[0].y);
-//
-//     for (var i = 1; i < points.length; i++) {
-//       this.context.lineTo(points[i].x, points[i].y);
-//     }
-//     this.context.fill();
-//   } else {
-//     points = corners.slice(0, corners.length);
-//     points = points.map(function (p) {
-//       var newPos = sprite.game.iso.project(p);
-//       newPos.x += posX;
-//       newPos.y += posY;
-//       return newPos;
-//     });
-//
-//     this.context.moveTo(points[0].x, points[0].y);
-//     this.context.beginPath();
-//     this.context.strokeStyle = color;
-//
-//     this.context.lineTo(points[1].x, points[1].y);
-//     this.context.lineTo(points[3].x, points[3].y);
-//     this.context.lineTo(points[2].x, points[2].y);
-//     this.context.lineTo(points[6].x, points[6].y);
-//     this.context.lineTo(points[4].x, points[4].y);
-//     this.context.lineTo(points[5].x, points[5].y);
-//     this.context.lineTo(points[1].x, points[1].y);
-//     this.context.lineTo(points[0].x, points[0].y);
-//     this.context.lineTo(points[4].x, points[4].y);
-//     this.context.moveTo(points[0].x, points[0].y);
-//     this.context.lineTo(points[2].x, points[2].y);
-//     this.context.moveTo(points[3].x, points[3].y);
-//     this.context.lineTo(points[7].x, points[7].y);
-//     this.context.lineTo(points[6].x, points[6].y);
-//     this.context.moveTo(points[7].x, points[7].y);
-//     this.context.lineTo(points[5].x, points[5].y);
-//     this.context.stroke();
-//     this.context.closePath();
-//   }
-//
-//   this.stop();
-//
-// };

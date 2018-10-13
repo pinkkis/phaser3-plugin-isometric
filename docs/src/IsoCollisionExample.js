@@ -1,5 +1,5 @@
 import Phaser, { Game, Scene } from 'phaser';
-import IsoPlugin, { IsoPhysics } from 'phaser3-plugin-isometric';
+import IsoPlugin, { IsoPhysics } from '../../dist/phaser-plugin-isometric';
 
 class IsoCollisionExample extends Scene {
   constructor() {
@@ -13,6 +13,8 @@ class IsoCollisionExample extends Scene {
 
   preload() {
     this.load.image('cube', '../dist/assets/cube.png');
+    this.load.image('tile', '../dist/assets/tile.png');
+    this.load.image('bb', '../dist/assets/bb.png');
     this.load.scenePlugin({
       key: 'IsoPlugin',
       url: IsoPlugin,
@@ -50,10 +52,13 @@ class IsoCollisionExample extends Scene {
 
   spawnCubes() {
     let cube;
-    for (let xx = 256; xx > 0; xx -= 64) {
-      for (let yy = 256; yy > 0; yy -= 64) {
+    let tile = true;
+    for (let xx = 63; xx > 0; xx -= 16) {
+      for (let yy = 65; yy > 0; yy -= 16) {
         // Add a cube which is way above the ground
-        cube = this.add.isoSprite(xx, yy, 600, 'cube', this.isoGroup);
+        cube = this.add.isoSprite(xx, yy, 50, 'bb', this.isoGroup);
+        // cube.renderDebug(true);
+        tile = !tile;
 
         // Enable the physics body on this cube
         this.isoPhysics.world.enable(cube);
@@ -61,13 +66,17 @@ class IsoCollisionExample extends Scene {
         // Collide with the world bounds so it doesn't go falling forever or fly off the screen!
         cube.body.collideWorldBounds = true;
 
-        // Add a full bounce on the x and y axes, and a bit on the z axis. 
-        cube.body.bounce.set(1, 1, 0.2);
+        cube
+          .setInteractive()
+          .on('pointerup', () => cube._createDebug());
+
+        // Add a full bounce on the x and y axes, and a bit on the z axis.
+        cube.body.bounce.set(1, 1, .2);
 
         // Send the cubes off in random x and y directions! Wheee!
         const randomX = Math.trunc((Math.random() * 100 - 50));
         const randomY = Math.trunc((Math.random() * 100 - 50));
-        cube.body.velocity.setTo(randomX, randomY, 0);
+        cube.body.velocity.setTo(randomX, randomY, randomY);
       }
     }
   }

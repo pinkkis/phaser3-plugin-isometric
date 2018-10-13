@@ -1,5 +1,5 @@
 import Phaser, { Game, Scene } from 'phaser';
-import IsoPlugin from 'phaser3-plugin-isometric';
+import IsoPlugin from '../../dist/phaser-plugin-isometric';
 
 class IsoInteractionExample extends Scene {
   constructor() {
@@ -12,7 +12,7 @@ class IsoInteractionExample extends Scene {
   }
 
   preload() {
-    this.load.image('tile', '../dist/assets/tile.png');
+    this.load.image('tile', '../dist/assets/bb.png');
     this.load.scenePlugin({
       key: 'IsoPlugin',
       url: IsoPlugin,
@@ -32,10 +32,11 @@ class IsoInteractionExample extends Scene {
   spawnTiles() {
     var tile;
 
-    for (var xx = 0; xx < 256; xx += 38) {
-      for (var yy = 0; yy < 256; yy += 38) {
+    for (var xx = 0; xx < 128; xx += 11) {
+      for (var yy = 0; yy < 128; yy += 11) {
         tile = this.add.isoSprite(xx, yy, 0, 'tile', this.isoGroup);
-        tile.setInteractive();
+        tile.setInteractive({pixelPerfect: true});
+        // tile.renderDebug(true);
 
         tile.on('pointerover', function() {
           this.setTint(0x86bfda);
@@ -45,6 +46,10 @@ class IsoInteractionExample extends Scene {
         tile.on('pointerout', function() {
           this.clearTint();
           this.isoZ -= 5;
+        });
+
+        tile.on('pointerup', function() {
+          this.renderDebug(!this._renderDebug);
         });
       }
     }
